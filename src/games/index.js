@@ -25,9 +25,15 @@ import TowerDefense from './TowerDefense.jsx'
 import Platformer from './Platformer.jsx'
 import Sokoban from './Sokoban.jsx'
 import Chess from './Chess.jsx'
+import Sudoku from './Sudoku.jsx'
+import Blackjack from './Blackjack.jsx'
+import Gomoku from './Gomoku.jsx'
+import Battleship from './Battleship.jsx'
+import Racing from './Racing.jsx'
+import Suika from './Suika.jsx'
 
 // Display order of category sections on the home screen.
-export const categories = ['Arcade', 'Puzzle', 'Logic & AI', 'Strategy', 'Memory']
+export const categories = ['Arcade', 'Puzzle', 'Logic & AI', 'Strategy', 'Cards', 'Memory']
 
 // Game registry — add a new game here (with a `category`) and it shows up,
 // grouped under its section, with its own URL (#/<id>) automatically.
@@ -61,9 +67,21 @@ export const games = [
   { id: 'othello', title: 'Othello', category: 'Logic & AI', tagline: 'Flank, flip, flood the board. Grab the corners before the CPU.', emoji: '⚫', accent: '#2de2e6', component: Othello },
   { id: 'checkers', title: 'Checkers', category: 'Logic & AI', tagline: 'Forced jumps, multi-captures, kings — beat the alpha-beta CPU.', emoji: '🔴', accent: '#ff2d6f', component: Checkers },
   { id: 'chess', title: 'Chess', category: 'Logic & AI', tagline: 'Full legal chess vs an alpha-beta AI. Checkmate the CPU.', emoji: '♟️', accent: '#f5f6fa', component: Chess },
+  { id: 'gomoku', title: 'Gomoku', category: 'Logic & AI', tagline: 'Five in a row. Outwit the threat-search AI.', emoji: '⬛', accent: '#ff2d6f', component: Gomoku },
+
+  // ---------- Puzzle (added) ----------
+  { id: 'sudoku', title: 'Sudoku', category: 'Puzzle', tagline: 'Fill the grid. One solution. Pure logic.', emoji: '🧩', accent: '#4d7cff', component: Sudoku },
+  { id: 'suika', title: 'Suika', category: 'Puzzle', tagline: 'Drop and merge fruit. Chase the watermelon.', emoji: '🍉', accent: '#54e346', component: Suika },
+
+  // ---------- Arcade (added) ----------
+  { id: 'racing', title: 'Racing', category: 'Arcade', tagline: 'Hit the apex. Beat the pack over 3 laps.', emoji: '🏎️', accent: '#ff8a1e', component: Racing },
 
   // ---------- Strategy ----------
   { id: 'tower-defense', title: 'Tower Defense', category: 'Strategy', tagline: 'Build towers, hold the line, survive every wave.', emoji: '🏰', accent: '#ffd60a', component: TowerDefense },
+  { id: 'battleship', title: 'Battleship', category: 'Strategy', tagline: 'Hunt the fleet. Sink them before they sink you.', emoji: '🚢', accent: '#4d7cff', component: Battleship },
+
+  // ---------- Cards ----------
+  { id: 'blackjack', title: 'Blackjack', category: 'Cards', tagline: 'Hit, stand, double. Beat the dealer to 21.', emoji: '♠️', accent: '#54e346', component: Blackjack },
 
   // ---------- Memory ----------
   { id: 'memory', title: 'Memory', category: 'Memory', tagline: 'Flip and match the pairs in as few moves as you can.', emoji: '🃏', accent: '#b14aed', component: MemoryMatch },

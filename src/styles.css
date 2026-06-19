@@ -483,3 +483,19 @@ body {
 }
 
 .card-foot .card-play { margin-top: 0; }
+
+/* batch A: sudoku/blackjack/gomoku/battleship/racing/suika */
+.sudoku-canvas { aspect-ratio: 482 / 624; height: min(86vh, 660px); }
+.blackjack-canvas { aspect-ratio: 560 / 600; height: min(84vh, 600px); }
+.gomoku-canvas { aspect-ratio: 486 / 538; height: min(84vh, 600px); }
+.battleship-canvas { aspect-ratio: 416 / 720; height: min(88vh, 740px); }
+.racing-canvas { aspect-ratio: 640 / 560; width: min(94vw, 760px); max-height: 84vh; }
+.suika-canvas { aspect-ratio: 420 / 600; height: min(86vh, 640px); }
+.sudoku-canvas, .blackjack-canvas, .gomoku-canvas, .battleship-canvas,
+.racing-canvas, .suika-canvas {
+  max-width: 100%;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(255, 45, 111, 0.25);
+  touch-action: none; cursor: pointer; display: block;
+}
