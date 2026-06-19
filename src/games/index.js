@@ -31,6 +31,12 @@ import Gomoku from './Gomoku.jsx'
 import Battleship from './Battleship.jsx'
 import Racing from './Racing.jsx'
 import Suika from './Suika.jsx'
+import Tanks from './Tanks.jsx'
+import SuperLeap from './SuperLeap.jsx'
+import Slots from './Slots.jsx'
+import Survivors from './Survivors.jsx'
+import Solitaire from './Solitaire.jsx'
+import Nonogram from './Nonogram.jsx'
 
 // Display order of category sections on the home screen.
 export const categories = ['Arcade', 'Puzzle', 'Logic & AI', 'Strategy', 'Cards', 'Memory']
@@ -75,6 +81,12 @@ export const games = [
 
   // ---------- Arcade (added) ----------
   { id: 'racing', title: 'Racing', category: 'Arcade', tagline: 'Hit the apex. Beat the pack over 3 laps.', emoji: '🏎️', accent: '#ff8a1e', component: Racing },
+  { id: 'tanks', title: 'Tanks', category: 'Arcade', tagline: 'Defend the base. Blast the tank battalion.', emoji: '🪖', accent: '#ff8a1e', component: Tanks },
+  { id: 'superleap', title: 'Super Leap', category: 'Arcade', tagline: 'Run, jump, stomp, grab coins, raise the flag.', emoji: '🍄', accent: '#54e346', component: SuperLeap },
+  { id: 'survivors', title: 'Survivors', category: 'Arcade', tagline: 'Auto-attack the horde. Level up. Outlast.', emoji: '🧛', accent: '#b14aed', component: Survivors },
+
+  // ---------- Puzzle (added 2) ----------
+  { id: 'nonogram', title: 'Nonogram', category: 'Puzzle', tagline: 'Read the clues. Reveal the hidden picture.', emoji: '🖼️', accent: '#2de2e6', component: Nonogram },
 
   // ---------- Strategy ----------
   { id: 'tower-defense', title: 'Tower Defense', category: 'Strategy', tagline: 'Build towers, hold the line, survive every wave.', emoji: '🏰', accent: '#ffd60a', component: TowerDefense },
@@ -82,6 +94,8 @@ export const games = [
 
   // ---------- Cards ----------
   { id: 'blackjack', title: 'Blackjack', category: 'Cards', tagline: 'Hit, stand, double. Beat the dealer to 21.', emoji: '♠️', accent: '#54e346', component: Blackjack },
+  { id: 'solitaire', title: 'Solitaire', category: 'Cards', tagline: 'Klondike classic. Build the foundations, clear the table.', emoji: '🂡', accent: '#54e346', component: Solitaire },
+  { id: 'slots', title: 'Slots', category: 'Cards', tagline: 'Spin the reels. Line up the symbols. Hit the jackpot.', emoji: '🎰', accent: '#ffd60a', component: Slots },
 
   // ---------- Memory ----------
   { id: 'memory', title: 'Memory', category: 'Memory', tagline: 'Flip and match the pairs in as few moves as you can.', emoji: '🃏', accent: '#b14aed', component: MemoryMatch },

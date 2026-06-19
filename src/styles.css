@@ -499,3 +499,19 @@ body {
   border: 1px solid rgba(255, 45, 111, 0.25);
   touch-action: none; cursor: pointer; display: block;
 }
+
+/* batch B: tanks/superleap/slots/survivors/solitaire/nonogram */
+.tanks-canvas { aspect-ratio: 520 / 580; height: min(86vh, 660px); }
+.superleap-canvas { aspect-ratio: 640 / 400; width: min(94vw, 800px); max-height: 84vh; }
+.slots-canvas { aspect-ratio: 480 / 720; height: min(88vh, 760px); }
+.survivors-canvas { aspect-ratio: 640 / 520; width: min(94vw, 760px); max-height: 84vh; }
+.solitaire-canvas { aspect-ratio: 700 / 560; width: min(95vw, 840px); max-height: 84vh; }
+.nonogram-canvas { aspect-ratio: 510 / 580; height: min(86vh, 660px); }
+.tanks-canvas, .superleap-canvas, .slots-canvas, .survivors-canvas,
+.solitaire-canvas, .nonogram-canvas {
+  max-width: 100%;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(255, 45, 111, 0.25);
+  touch-action: none; cursor: pointer; display: block;
+}
