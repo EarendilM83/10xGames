@@ -515,3 +515,15 @@ body {
   border: 1px solid rgba(255, 45, 111, 0.25);
   touch-action: none; cursor: pointer; display: block;
 }
+
+/* batch C: freecell/mahjong/shooter */
+.freecell-canvas { aspect-ratio: 760 / 560; width: min(95vw, 880px); max-height: 84vh; }
+.mahjong-canvas { aspect-ratio: 720 / 560; width: min(95vw, 840px); max-height: 84vh; }
+.shooter-canvas { aspect-ratio: 480 / 640; height: min(88vh, 700px); }
+.freecell-canvas, .mahjong-canvas, .shooter-canvas {
+  max-width: 100%;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(255, 45, 111, 0.25);
+  touch-action: none; cursor: pointer; display: block;
+}
