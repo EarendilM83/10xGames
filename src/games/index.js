@@ -1,0 +1,73 @@
+import FlappyBird from './FlappyBird.jsx'
+import Minesweeper from './Minesweeper.jsx'
+import Tetris from './Tetris.jsx'
+import Snake from './Snake.jsx'
+import Game2048 from './Game2048.jsx'
+import Pong from './Pong.jsx'
+import TicTacToe from './TicTacToe.jsx'
+import Breakout from './Breakout.jsx'
+import MemoryMatch from './MemoryMatch.jsx'
+import ConnectFour from './ConnectFour.jsx'
+import Simon from './Simon.jsx'
+import SpaceInvaders from './SpaceInvaders.jsx'
+import Asteroids from './Asteroids.jsx'
+import Tron from './Tron.jsx'
+import DoodleJump from './DoodleJump.jsx'
+import Frogger from './Frogger.jsx'
+import MissileCommand from './MissileCommand.jsx'
+import PacMan from './PacMan.jsx'
+import BubbleShooter from './BubbleShooter.jsx'
+import Othello from './Othello.jsx'
+import Checkers from './Checkers.jsx'
+import Match3 from './Match3.jsx'
+import Wordle from './Wordle.jsx'
+import TowerDefense from './TowerDefense.jsx'
+import Platformer from './Platformer.jsx'
+import Sokoban from './Sokoban.jsx'
+import Chess from './Chess.jsx'
+
+// Display order of category sections on the home screen.
+export const categories = ['Arcade', 'Puzzle', 'Logic & AI', 'Strategy', 'Memory']
+
+// Game registry — add a new game here (with a `category`) and it shows up,
+// grouped under its section, with its own URL (#/<id>) automatically.
+export const games = [
+  // ---------- Arcade ----------
+  { id: 'flappy-bird', title: 'Flappy Bird', category: 'Arcade', tagline: 'Tap to flap. Dodge the pipes. Beat your high score.', emoji: '🐤', accent: '#ffd60a', component: FlappyBird },
+  { id: 'snake', title: 'Snake', category: 'Arcade', tagline: 'Eat, grow, survive. Don’t bite your tail.', emoji: '🐍', accent: '#2de2e6', component: Snake },
+  { id: 'pong', title: 'Pong', category: 'Arcade', tagline: 'The original. Solo vs CPU or 2-player head-to-head.', emoji: '🏓', accent: '#2de2e6', component: Pong },
+  { id: 'breakout', title: 'Breakout', category: 'Arcade', tagline: 'Smash every brick. Don’t drop the ball.', emoji: '🧱', accent: '#ff2d6f', component: Breakout },
+  { id: 'space-invaders', title: 'Space Invaders', category: 'Arcade', tagline: 'Blast the alien armada before it lands.', emoji: '👾', accent: '#54e346', component: SpaceInvaders },
+  { id: 'asteroids', title: 'Asteroids', category: 'Arcade', tagline: 'Drift, blast rocks, survive the waves.', emoji: '🚀', accent: '#2de2e6', component: Asteroids },
+  { id: 'tron', title: 'Tron', category: 'Arcade', tagline: 'Two light cycles, one grid. Don’t cross the streams.', emoji: '🏍️', accent: '#ff2d6f', component: Tron },
+  { id: 'doodle-jump', title: 'Doodle Jump', category: 'Arcade', tagline: 'Bounce ever higher. Don’t miss a platform.', emoji: '⬆️', accent: '#4d7cff', component: DoodleJump },
+  { id: 'frogger', title: 'Frogger', category: 'Arcade', tagline: 'Hop across traffic and river. Fill every lily pad.', emoji: '🐸', accent: '#54e346', component: Frogger },
+  { id: 'missile-command', title: 'Missile Command', category: 'Arcade', tagline: 'Intercept the incoming barrage. Save the cities.', emoji: '🚀', accent: '#ff8a1e', component: MissileCommand },
+  { id: 'pac-man', title: 'Pac-Man', category: 'Arcade', tagline: 'Chomp pellets, dodge four ghosts with minds of their own.', emoji: '🟡', accent: '#ffd60a', component: PacMan },
+  { id: 'platformer', title: 'Platformer', category: 'Arcade', tagline: 'Run, jump, stomp, grab coins, reach the flag.', emoji: '🍄', accent: '#54e346', component: Platformer },
+
+  // ---------- Puzzle ----------
+  { id: 'tetris', title: 'Tetris', category: 'Puzzle', tagline: 'Stack the blocks. Clear the lines. Don’t top out.', emoji: '🟪', accent: '#b14aed', component: Tetris },
+  { id: '2048', title: '2048', category: 'Puzzle', tagline: 'Slide and merge tiles. Reach 2048.', emoji: '🔢', accent: '#ffd60a', component: Game2048 },
+  { id: 'bubble-shooter', title: 'Bubble Shooter', category: 'Puzzle', tagline: 'Aim, match 3+, drop the rest. Clear the board.', emoji: '🫧', accent: '#b14aed', component: BubbleShooter },
+  { id: 'match-3', title: 'Match-3', category: 'Puzzle', tagline: 'Swap gems, chain cascades, beat your best in 30 moves.', emoji: '💎', accent: '#b14aed', component: Match3 },
+  { id: 'wordle', title: 'Wordle', category: 'Puzzle', tagline: 'Six guesses, five letters. Crack the word.', emoji: '🟩', accent: '#54e346', component: Wordle },
+  { id: 'sokoban', title: 'Sokoban', category: 'Puzzle', tagline: 'Push every crate onto its goal.', emoji: '📦', accent: '#ff8a1e', component: Sokoban },
+
+  // ---------- Logic & AI ----------
+  { id: 'minesweeper', title: 'Minesweeper', category: 'Logic & AI', tagline: 'Pure logic, no luck. Every board is solvable.', emoji: '💣', accent: '#ff2d6f', component: Minesweeper },
+  { id: 'tic-tac-toe', title: 'Tic-Tac-Toe', category: 'Logic & AI', tagline: 'Beat the unbeatable AI. (You can’t — best you get is a draw.)', emoji: '⭕', accent: '#ff2d6f', component: TicTacToe },
+  { id: 'connect-four', title: 'Connect Four', category: 'Logic & AI', tagline: 'Drop discs, line up four. Outsmart the alpha-beta CPU.', emoji: '🔴', accent: '#ffd60a', component: ConnectFour },
+  { id: 'othello', title: 'Othello', category: 'Logic & AI', tagline: 'Flank, flip, flood the board. Grab the corners before the CPU.', emoji: '⚫', accent: '#2de2e6', component: Othello },
+  { id: 'checkers', title: 'Checkers', category: 'Logic & AI', tagline: 'Forced jumps, multi-captures, kings — beat the alpha-beta CPU.', emoji: '🔴', accent: '#ff2d6f', component: Checkers },
+  { id: 'chess', title: 'Chess', category: 'Logic & AI', tagline: 'Full legal chess vs an alpha-beta AI. Checkmate the CPU.', emoji: '♟️', accent: '#f5f6fa', component: Chess },
+
+  // ---------- Strategy ----------
+  { id: 'tower-defense', title: 'Tower Defense', category: 'Strategy', tagline: 'Build towers, hold the line, survive every wave.', emoji: '🏰', accent: '#ffd60a', component: TowerDefense },
+
+  // ---------- Memory ----------
+  { id: 'memory', title: 'Memory', category: 'Memory', tagline: 'Flip and match the pairs in as few moves as you can.', emoji: '🃏', accent: '#b14aed', component: MemoryMatch },
+  { id: 'simon', title: 'Simon', category: 'Memory', tagline: 'Watch the pattern. Repeat it. Don’t break the chain.', emoji: '🎵', accent: '#2de2e6', component: Simon },
+]
+
+export const getGame = (id) => games.find((g) => g.id === id)

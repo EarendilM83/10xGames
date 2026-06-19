@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Flappy Bird — Research Results · 10x Games</title>
+<style>
+  :root {
+    --bg: #0b0f1a;
+    --bg2: #1b2440;
+    --panel: #141a2b;
+    --text: #f2f5ff;
+    --muted: #8a93ad;
+    --yellow: #ffd60a;
+    --green: #7ed01a;
+    --sky: #4ec0ff;
+    --red: #ff5d6c;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+    overflow-x: hidden;
+  }
+  .wrap { max-width: 1000px; margin: 0 auto; padding: 0 24px; }
+
+  /* reveal-on-scroll */
+  .reveal { opacity: 0; transform: translateY(28px); transition: opacity .7s ease, transform .7s ease; }
+  .reveal.in { opacity: 1; transform: none; }
+
+  /* ---------- HERO ---------- */
+  .hero {
+    min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center;
+    background: radial-gradient(1200px 700px at 50% -10%, var(--bg2) 0%, var(--bg) 60%);
+    position: relative;
+    padding: 40px 24px;
+  }
+  .brand {
+    position: absolute; top: 28px; left: 50%; transform: translateX(-50%);
+    font-weight: 800; letter-spacing: -.5px; font-size: 20px;
+  }
+  .brand .x { background: linear-gradient(120deg, var(--yellow), #ff7b00);
+    -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .bird {
+    font-size: 96px; line-height: 1;
+    animation: bob 2.2s ease-in-out infinite;
+    filter: drop-shadow(0 12px 30px rgba(255,214,10,.25));
+  }
+  @keyframes bob { 0%,100%{ transform: translateY(0) rotate(-4deg);} 50%{ transform: translateY(-22px) rotate(6deg);} }
+  .hero h1 {
+    font-size: clamp(40px, 8vw, 86px); font-weight: 800; letter-spacing: -2px;
+    margin: 18px 0 6px;
+  }
+  .hero h1 .hl { color: var(--yellow); }
+  .hero .kicker { color: var(--sky); font-weight: 700; letter-spacing: 3px; font-size: 13px; text-transform: uppercase; }
+  .hero .hook {
+    max-width: 680px; font-size: clamp(20px, 3vw, 28px); color: var(--text);
+    margin-top: 22px; font-weight: 500;
+  }
+  .hero .hook b { color: var(--green); }
+  .scroll-cue { position: absolute; bottom: 26px; color: var(--muted); font-size: 13px; animation: bob 2s ease-in-out infinite; }
+
+  /* ---------- SECTIONS ---------- */
+  section { padding: 90px 0; border-top: 1px solid rgba(255,255,255,.06); }
+  .eyebrow { color: var(--sky); font-weight: 700; letter-spacing: 3px; font-size: 12px; text-transform: uppercase; margin-bottom: 12px; }
+  h2 { font-size: clamp(28px, 5vw, 44px); font-weight: 800; letter-spacing: -1px; margin-bottom: 10px; }
+  .lead { color: var(--muted); font-size: 18px; max-width: 720px; margin-bottom: 36px; }
+
+  /* what-it-is cards */
+  .what-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 16px; }
+  .mini {
+    background: var(--panel); border: 1px solid rgba(255,255,255,.08);
+    border-radius: 16px; padding: 22px;
+  }
+  .mini .ico { font-size: 30px; margin-bottom: 10px; }
+  .mini h3 { font-size: 16px; margin-bottom: 4px; }
+  .mini p { color: var(--muted); font-size: 14px; }
+
+  /* numbers */
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .stat {
+    background: linear-gradient(180deg, var(--panel), #0f1422);
+    border: 1px solid rgba(255,255,255,.08); border-radius: 20px;
+    padding: 34px 20px; text-align: center; position: relative; overflow: hidden;
+  }
+  .stat::before { content:''; position:absolute; inset:0 0 auto 0; height:4px; background: var(--yellow); }
+  .stat .num { font-size: clamp(40px, 7vw, 68px); font-weight: 800; letter-spacing: -2px; color: var(--yellow); }
+  .stat .lbl { color: var(--muted); font-size: 15px; margin-top: 6px; }
+  .stat.s2::before { background: var(--sky); } .stat.s2 .num { color: var(--sky); }
+  .stat.s3::before { background: var(--green); } .stat.s3 .num { color: var(--green); }
+  .note { color: var(--muted); font-size: 13px; margin-top: 18px; }
+
+  /* timeline */
+  .timeline { position: relative; padding-left: 8px; }
+  .tl-bar { position:absolute; left: 18px; top: 8px; bottom: 8px; width: 6px; border-radius: 6px;
+    background: linear-gradient(var(--green), #4e9c00); }
+  .tl-item { position: relative; padding: 0 0 34px 56px; }
+  .tl-item:last-child { padding-bottom: 0; }
+  .tl-dot { position:absolute; left: 9px; top: 2px; width: 24px; height: 24px; border-radius: 50%;
+    background: var(--yellow); border: 4px solid var(--bg); box-shadow: 0 0 0 2px var(--yellow); }
+  .tl-item.end .tl-dot { background: var(--red); box-shadow: 0 0 0 2px var(--red); }
+  .tl-date { font-weight: 800; color: var(--text); font-size: 18px; }
+  .tl-desc { color: var(--muted); font-size: 15px; }
+
+  /* why hard */
+  .loop { display:flex; flex-wrap: wrap; gap: 14px; align-items: center; justify-content: center; margin-top: 10px; }
+  .loop .step { background: var(--panel); border:1px solid rgba(255,255,255,.08); border-radius: 14px; padding: 14px 18px; font-weight: 600; }
+  .loop .arrow { color: var(--sky); font-size: 22px; }
+  .quote { font-size: clamp(24px,4vw,36px); font-weight: 800; text-align:center; margin: 30px auto 0; max-width: 760px; letter-spacing:-.5px;}
+  .quote .hl { color: var(--green); }
+
+  /* facts vs myths */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .col { border-radius: 18px; padding: 26px; border: 1px solid rgba(255,255,255,.08); }
+  .col.facts { background: rgba(126,208,26,.07); border-color: rgba(126,208,26,.3); }
+  .col.myths { background: rgba(255,93,108,.06); border-color: rgba(255,93,108,.3); }
+  .col h3 { font-size: 20px; margin-bottom: 14px; display:flex; align-items:center; gap:8px;}
+  .col ul { list-style: none; display:flex; flex-direction: column; gap: 12px; }
+  .col li { font-size: 15px; padding-left: 26px; position: relative; color: #d7ddee; }
+  .col.facts li::before { content:'✓'; position:absolute; left:0; color: var(--green); font-weight:800; }
+  .col.myths li::before { content:'✕'; position:absolute; left:0; color: var(--red); font-weight:800; }
+  .col.myths li { text-decoration: line-through; text-decoration-color: rgba(255,93,108,.5); }
+
+  /* engineering / loop code */
+  .codecard { background: #0c1120; border:1px solid rgba(255,255,255,.1); border-radius: 16px; padding: 24px; }
+  .codecard pre { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 14px; color: #cdd6f4; overflow-x:auto; line-height: 1.7;}
+  .codecard .c { color: #6b7390; } .codecard .k { color: var(--sky); } .codecard .y { color: var(--yellow); }
+
+  /* method strip */
+  .method { display:grid; grid-template-columns: repeat(auto-fit,minmax(120px,1fr)); gap: 14px; }
+  .method .m { text-align:center; background: var(--panel); border:1px solid rgba(255,255,255,.08); border-radius: 14px; padding: 18px; }
+  .method .m b { display:block; font-size: 30px; color: var(--yellow); font-weight:800; }
+  .method .m span { color: var(--muted); font-size: 13px; }
+
+  /* sources */
+  .src { columns: 2; column-gap: 28px; }
+  .src a { color: #aebbd6; text-decoration: none; font-size: 14px; display:block; padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,.05); break-inside: avoid;}
+  .src a:hover { color: var(--sky); }
+
+  footer { text-align:center; padding: 60px 24px; color: var(--muted); font-size: 14px; }
+  footer .play { display:inline-block; margin-top:16px; background: var(--yellow); color:#1a1a1a; font-weight:800; padding: 14px 28px; border-radius: 12px; text-decoration:none; }
+
+  @media (max-width: 680px) {
+    .stats, .two-col { grid-template-columns: 1fr; }
+    .src { columns: 1; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="brand"><span class="x">10x</span> Games · Research</div>
+  <div class="bird">🐤</div>
+  <div class="kicker">What is Flappy Bird?</div>
+  <h1>Built in a <span class="hl">weekend.</span></h1>
+  <p class="hook">A solo developer made a game in 2–3 days. It hit <b>#1 in 53 countries</b>, reportedly earned <b>~$50,000 a day</b> — then he <b>deleted it</b> at the peak.</p>
+  <div class="scroll-cue">↓ scroll for the verified story</div>
+</header>
+
+<!-- WHAT IT IS -->
+<section>
+  <div class="wrap reveal">
+    <div class="eyebrow">The whole game in one verb</div>
+    <h2>One tap. That's it.</h2>
+    <p class="lead">Flappy Bird is a one-button arcade survival game. Keep a bird in the air by tapping to flap it through gaps between green pipes. A single mistake ends the run.</p>
+    <div class="what-grid">
+      <div class="mini"><div class="ico">👆</div><h3>Input</h3><p>A single tap — the only control there is.</p></div>
+      <div class="mini"><div class="ico">🎯</div><h3>Goal</h3><p>Fly as far as you can without hitting anything.</p></div>
+      <div class="mini"><div class="ico">➕</div><h3>Score</h3><p>+1 point for every pair of pipes you clear.</p></div>
+      <div class="mini"><div class="ico">💥</div><h3>Fail</h3><p>Touch a pipe, the ground or ceiling → game over.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- NUMBERS -->
+<section>
+  <div class="wrap reveal">
+    <div class="eyebrow">The numbers that made it legend</div>
+    <h2>Tiny game. Huge impact.</h2>
+    <div class="stats">
+      <div class="stat"><div class="num" data-to="3" data-prefix="2–">2–3</div><div class="lbl">days to build it</div></div>
+      <div class="stat s2"><div class="num" data-to="53">0</div><div class="lbl">countries at #1 free</div></div>
+      <div class="stat s3"><div class="num" data-to="50" data-prefix="~$" data-suffix="K">~$50K</div><div class="lbl">per day, from ads</div></div>
+    </div>
+    <p class="note">⌁ Plus <b>50M+ downloads</b> before removal. Revenue figure is the creator's own report in interviews — presented as "reportedly," not audited.</p>
+  </div>
+</section>
+
+<!-- TIMELINE -->
+<section>
+  <div class="wrap reveal">
+    <div class="eyebrow">Rise and disappearance</div>
+    <h2>The timeline</h2>
+    <div class="timeline" style="margin-top:30px;">
+      <div class="tl-bar"></div>
+      <div class="tl-item"><div class="tl-dot"></div><div class="tl-date">May 24, 2013</div><div class="tl-desc">Released on the iOS App Store by Dong Nguyen (studio: dotGears). Working title: “Flap Flap.”</div></div>
+      <div class="tl-item"><div class="tl-dot"></div><div class="tl-date">Early 2014</div><div class="tl-desc">Goes viral months after launch — reaches <b>#1 free</b> in 53 countries.</div></div>
+      <div class="tl-item end"><div class="tl-dot"></div><div class="tl-date">Feb 10, 2014</div><div class="tl-desc">Nguyen pulls it from both stores <b>at the height of its popularity</b> — saying it had become too addictive. Not a legal issue.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- WHY HARD -->
+<section>
+  <div class="wrap reveal">
+    <div class="eyebrow">The psychology</div>
+    <h2>Why you can't put it down</h2>
+    <p class="lead">Instant death plus instant restart creates the shortest possible failure-to-retry loop. No menus, no waiting — you fail and you're already playing again.</p>
+    <div class="loop">
+      <div class="step">😤 Fail instantly</div>
+      <div class="arrow">→</div>
+      <div class="step">🔄 Restart in &lt;1s</div>
+      <div class="arrow">→</div>
+      <div class="step">🎯 "Just one more"</div>
+      <div class="arrow">↺</div>
+    </div>
+    <p class="quote">“Easy to learn. <span class="hl">Impossible to master.</span>”</p>
+  </div>
+</section>
+
+<!-- FACTS VS MYTHS -->
+<section>
+  <div class="wrap reveal">
+    <div class="eyebrow">Verified vs. refuted</div>
+    <h2>What survived fact-checking</h2>
+    <p class="lead">Every claim was run through 3-vote adversarial verification. These got confirmed — and these popular "facts" got killed.</p>
+    <div class="two-col">
+      <div class="col facts">
+        <h3>✓ Confirmed</h3>
+        <ul>
+          <li>Solo dev Dong Nguyen / dotGears, built in 2–3 days</li>
+          <li>iOS May 24, 2013 · #1 in 53 countries</li>
+          <li>Removed Feb 10, 2014, at peak popularity</li>
+          <li>~$50K/day from ads (self-reported), 50M+ downloads</li>
+          <li>Free, ad-supported, no paid version</li>
+          <li>Removed for addictiveness — not a legal threat</li>
+        </ul>
+      </div>
+      <div class="col myths">
+        <h3>✕ Refuted myths</h3>
+        <ul>
+          <li>"90 million downloads"</li>
+          <li>"Hit #1 on Jan 17 / removal tweet Feb 9"</li>
+          <li>"The original physics constants are known"</li>
+        </ul>
+        <p style="color:var(--muted); font-size:13px; margin-top:16px; text-decoration:none;">The original 2013 physics (gravity, flap force, pipe speed) were <b>never published</b> — so our build tunes the feel by hand.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ENGINEERING -->
+<section>
+  <div class="wrap reveal">
+    <div class="eyebrow">How we rebuilt it</div>
+    <h2>React for the menu. Canvas for the pixels.</h2>
+    <p class="lead">The entire game is one loop running ~60 times a second. Here it is:</p>
+    <div class="codecard">
+<pre><span class="c">// every frame (~60fps):</span>
+velocity += <span class="y">gravity</span>        <span class="c">// bird always falls</span>
+<span class="k">on tap</span>: velocity = <span class="y">flap</span>   <span class="c">// tap = upward kick</span>
+bird.y  += velocity
+move pipes <span class="k">left</span>
+<span class="k">if</span> bird clears a pipe pair: score += <span class="y">1</span>
+<span class="k">if</span> bird hits pipe / ground / ceiling: <span class="y">game over</span></pre>
+    </div>
+    <p class="note">⌁ Because the original constants are unknown, <b>GRAVITY</b>, <b>FLAP</b>, <b>PIPE_GAP</b> and <b>PIPE_SPEED</b> sit at the top of the file — tuned by feel. Real game dev is iteration, not magic numbers.</p>
+  </div>
+</section>
+
+<!-- METHOD -->
+<section>
+  <div class="wrap reveal">
+    <div class="eyebrow">How this research was done</div>
+    <h2>Fact-checked, not vibes</h2>
+    <div class="method" style="margin-top:24px;">
+      <div class="m"><b>5</b><span>search angles</span></div>
+      <div class="m"><b>21</b><span>sources fetched</span></div>
+      <div class="m"><b>85</b><span>claims extracted</span></div>
+      <div class="m"><b>25</b><span>claims verified</span></div>
+      <div class="m"><b>3</b><span>myths killed</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- SOURCES -->
+<section>
+  <div class="wrap reveal">
+    <div class="eyebrow">Where it comes from</div>
+    <h2>Sources</h2>
+    <div class="src" style="margin-top:20px;">
+      <a href="https://en.wikipedia.org/wiki/Flappy_Bird" target="_blank">Wikipedia — Flappy Bird (history & timeline)</a>
+      <a href="https://www.theverge.com/2014/2/5/5383708/flappy-bird-revenue-50-k-per-day-dong-nguyen-interview" target="_blank">The Verge — "$50k per day" Dong Nguyen interview</a>
+      <a href="https://www.rollingstone.com/culture/rs-gaming/the-flight-of-the-birdman-flappy-bird-creator-dong-nguyen-speaks-out-112457/" target="_blank">Rolling Stone — "The Flight of the Birdman"</a>
+      <a href="https://time.com/6217/flappy-bird-app-dong-nguyen-addictive/" target="_blank">TIME — on its addictiveness</a>
+      <a href="https://www.gamespot.com/articles/painfully-difficult-flappy-bird-generates-50-000-per-day-in-ad-revenue/1100-6417569/" target="_blank">GameSpot — revenue corroboration</a>
+      <a href="https://github.com/sourabhv/FlapPyBird" target="_blank">GitHub — FlapPyBird (reference mechanics)</a>
+      <a href="https://www.scientificamerican.com/article/be-one-with-flappy-bird-the-science-of-flow-in-game-design/" target="_blank">Scientific American — the science of flow</a>
+      <a href="https://theconversation.com/flappy-bird-and-the-eight-secrets-to-optimal-gameplay-25603" target="_blank">The Conversation — optimal gameplay</a>
+      <a href="https://www.nbcnews.com/tech/mobile/flappy-bird-lives-splashy-fish-other-clones-n32066" target="_blank">NBC News — the clone explosion</a>
+      <a href="https://techcrunch.com/2014/02/15/apple-google-begin-rejecting-games-with-flappy-in-the-title/" target="_blank">TechCrunch — stores reject "Flappy" clones</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div>🐤 &nbsp;Research brief for the <b>10x</b> presentation · built with the same palette as the live game.</div>
+  <a class="play" href="http://localhost:5173/">▶ Play the live demo</a>
+</footer>
+
+<script>
+  // Reveal on scroll
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+  }, { threshold: 0.15 });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+  // Count-up numbers when stats become visible
+  const animateNum = (el) => {
+    const to = +el.dataset.to;
+    const prefix = el.dataset.prefix || '';
+    const suffix = el.dataset.suffix || '';
+    const dur = 1100; let start = null;
+    const tick = (t) => {
+      if (!start) start = t;
+      const p = Math.min((t - start) / dur, 1);
+      const val = Math.round((1 - Math.pow(1 - p, 3)) * to); // easeOutCubic
+      el.textContent = prefix + val + suffix;
+      if (p < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  };
+  const numIO = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { animateNum(e.target); numIO.unobserve(e.target); } });
+  }, { threshold: 0.6 });
+  document.querySelectorAll('.num[data-to]').forEach(el => numIO.observe(el));
+</script>
+</body>
+</html>
