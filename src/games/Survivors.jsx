@@ -715,6 +715,7 @@ export default function Survivors() {
     function loop(now) {
       let dt = (now - last) / 1000; last = now
       if (dt > 0.05) dt = 0.05
+      else if (dt < 0) dt = 0 // guard against clock skew (e.g. first frame / tab switch)
       if (auto) {
         if (state === 'ready') {
           wantWin = shouldAutoWin('survivors')
