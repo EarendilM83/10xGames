@@ -332,7 +332,11 @@ export default function Checkers() {
     }
 
     function autoPlayMove() {
-      if (!auto || state === 'over' || turn !== 1 || lock) return
+      if (!auto || state === 'over') return
+      // Self-healing: if it isn't pink's turn yet, or cyan's move/capture chain is
+      // still in flight (lock), don't drop the tick — retry shortly so the loop
+      // never stalls with no pending timer.
+      if (turn !== 1 || lock) { scheduleAuto(); return }
       const m = autoSkill === 'good' ? pinkBestMove(board) : (() => {
         const ms = legalMoves(board, 1)
         return ms.length ? ms[Math.floor(Math.random() * ms.length)] : null
@@ -340,6 +344,11 @@ export default function Checkers() {
       if (m) {
         applyMove(board, m)
         endTurn()
+      } else {
+        // Pink has no legal move => pink loses. endTurn() advances the turn and
+        // checkEnd() will detect the (now cyan-to-move-but-pink-lost) terminal
+        // state; here turn is still 1 with no moves, so checkEnd ends it directly.
+        checkEnd()
       }
     }
 

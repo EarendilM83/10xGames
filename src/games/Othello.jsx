@@ -201,8 +201,7 @@ export default function Othello() {
       // P always has a legal opening move, but advance state machine for safety
       advanceIfStuck()
       if (auto && state !== 'over') {
-        if (turn === A) scheduleAI() // pink passed at open (rare); let cyan go
-        else scheduleAuto()
+        scheduleAuto() // single self-healing driver handles both sides
       }
     }
 
@@ -228,20 +227,24 @@ export default function Othello() {
       return best
     }
 
-    // Drive pink (the human side) on a timer using the game's own commit().
+    // Single self-healing autoplay driver. Each tick it looks at whose turn it is,
+    // plays the appropriate move (pink: pickAutoMove, cyan: cyanMove), handles
+    // passes/game-over, and ALWAYS reschedules itself until the game is over — so
+    // no edge case (e.g. a cyan pass) can ever leave the loop without a pending
+    // timer. On game-over, finish() arms the restart. Does nothing when !auto.
     function scheduleAuto() {
       clearTimeout(autoTimer)
       if (!auto) return
+      // pink moves faster-feeling (~500-700ms), cyan keeps the AI "thinking" beat
+      const delay = turn === P ? 500 + Math.floor(Math.random() * 200) : 340
       autoTimer = setTimeout(() => {
-        if (state === 'over') return
-        // Only act on pink's turn; cyan is handled by scheduleAI(). If it's
-        // cyan's turn (AI thinking), wait and re-check.
-        if (turn !== P || lock) { scheduleAuto(); return }
-        const m = pickAutoMove()
-        if (m) commit(m[0], m[1], P) // game handles passes/turn advance
-        else { advanceIfStuck() }
-        if (state !== 'over' && turn === P) scheduleAuto()
-      }, 500 + Math.floor(Math.random() * 200)) // ~500-700ms
+        if (state === 'over') return // restart already scheduled by finish()
+        const player = turn
+        const m = player === P ? pickAutoMove() : cyanMove()
+        if (m) commit(m[0], m[1], player) // game handles turn advance / passes
+        else advanceIfStuck() // current side passes (or finish() ends the game)
+        if (state !== 'over') scheduleAuto() // always re-arm until game over
+      }, delay)
     }
 
     // If the side to move has no legal move, pass; if neither can move, end the game.
@@ -282,8 +285,11 @@ export default function Othello() {
       // handle passes / game end for the new side to move
       advanceIfStuck()
       if (state === 'over') return
+      // In autoplay the unified scheduleAuto() driver owns all scheduling, so
+      // commit() must not self-arm (would create a duplicate timer). Only the
+      // human-vs-CPU path arms the AI here.
+      if (auto) return
       if (aiOn && turn === A) scheduleAI()
-      else if (auto && turn === P) scheduleAuto()
     }
 
     // Cyan's move. Normally the full minimax (strong). But in autoplay WIN rounds

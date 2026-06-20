@@ -313,8 +313,19 @@ export default function Battleship() {
       autoTimer = setTimeout(() => {
         if (state === 'over') return
         if (mover !== 'player' || lock) { scheduleAuto(); return }
-        const i = autoPick()
-        if (i === undefined) return
+        let i = autoPick()
+        if (i === undefined) {
+          // Degenerate: autoPick found nothing. Fall back to the first un-fired
+          // enemy cell so the driver never stalls without a pending timer.
+          for (let k = 0; k < N * N; k++) if (shots[k] === 0) { i = k; break }
+          if (i === undefined) {
+            // No un-fired cells remain — the board is exhausted. If every enemy
+            // ship is sunk, end the round; otherwise retry next tick.
+            if (allSunk(enemy)) finish('player')
+            else scheduleAuto()
+            return
+          }
+        }
         const s = shipAt(enemy, i)
         if (s) { shots[i] = 2; s.hits.add(i); autoOnHit(i, s); flashT = 0 }
         else { shots[i] = 1 }

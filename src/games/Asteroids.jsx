@@ -232,6 +232,8 @@ export default function Asteroids() {
       ship.vx *= decay; ship.vy *= decay
       const sp = Math.hypot(ship.vx, ship.vy)
       if (sp > MAX_SPEED) { ship.vx = ship.vx / sp * MAX_SPEED; ship.vy = ship.vy / sp * MAX_SPEED }
+      // remember pre-move position for swept ship-vs-asteroid collision
+      const shipPrevX = ship.x, shipPrevY = ship.y
       ship.x += ship.vx * dt; ship.y += ship.vy * dt
       wrap(ship)
       if (invuln > 0) invuln = Math.max(0, invuln - dt)
@@ -265,12 +267,24 @@ export default function Asteroids() {
         if (hit) splitAsteroid(i)
       }
 
-      // ship vs asteroid
+      // ship vs asteroid (swept: sample along the ship's per-frame movement so
+      // a fast pass can't tunnel through a small asteroid in a single frame)
       if (invuln === 0) {
-        for (const a of asteroids) {
-          if (Math.hypot(ship.x - a.x, ship.y - a.y) < a.r + SHIP_R * 0.7) {
-            loseLife()
-            break
+        const moveX = ship.vx * dt, moveY = ship.vy * dt
+        const moveLen = Math.hypot(moveX, moveY)
+        // step ~8px along the path; at least 1 sample (the end point)
+        const steps = Math.max(1, Math.ceil(moveLen / 8))
+        let collided = false
+        for (let s = 1; s <= steps && !collided; s++) {
+          const t = s / steps
+          const sx = shipPrevX + moveX * t
+          const sy = shipPrevY + moveY * t
+          for (const a of asteroids) {
+            if (Math.hypot(sx - a.x, sy - a.y) < a.r + SHIP_R * 0.7) {
+              loseLife()
+              collided = true
+              break
+            }
           }
         }
       }

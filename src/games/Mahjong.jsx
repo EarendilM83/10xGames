@@ -354,7 +354,7 @@ export default function Mahjong() {
 
     function afterRemoval() {
       recountHint()
-      if (remainingCount() === 0) {
+      if (tiles.length > 0 && remainingCount() === 0) {
         state = 'won'
         endTime = performance.now()
         const ms = Math.round(endTime - startTime)
@@ -768,13 +768,20 @@ export default function Mahjong() {
       return best
     }
 
-    // Next pair from the recorded solution whose tiles are still on the board.
+    // Pick a pair that is ACTUALLY removable right now. Prefer the recorded
+    // solution order, but only accept a solution pair whose BOTH tiles are
+    // currently free. If the next solution pair isn't free yet (because a removal
+    // happened out of solution order), fall back to ANY currently-free matching
+    // pair so progress always continues. Returns null only when no free matching
+    // pair exists at all (genuinely stuck).
     function botPickSolution() {
       for (const [ia, ib] of solution) {
         const a = tiles[ia], b = tiles[ib]
-        if (a && b && !a.removed && !b.removed) return [a, b]
+        if (a && b && !a.removed && !b.removed && isFree(a, tiles) && isFree(b, tiles)) return [a, b]
       }
-      return null
+      // No solution pair is free right now (out-of-order removal); take any
+      // currently-free matching pair so the board keeps progressing.
+      return botPickGreedy()
     }
 
     // Worst pair (greedy minimiser) — used to deliberately strand tiles.
@@ -819,15 +826,29 @@ export default function Mahjong() {
 
       let pair = null
       if (wantWin) {
-        // follow the guaranteed solution; greedy only if it's gone (post-shuffle)
-        pair = botPickSolution() || botPickGreedy()
+        // follow the guaranteed solution, but only ever pick a pair that is free
+        // right now (botPickSolution falls back to any free matching pair).
+        pair = botPickSolution()
       } else {
         // lose round: always take the stranding (worst) move so the board is
         // likely to dead-end and the round records as a loss.
         pair = botPickWorst() || botPickGreedy()
       }
 
-      if (!pair) { scheduleBot(300); return }
+      if (!pair) {
+        // No removable pair exists right now: the board is genuinely stuck (or
+        // empty after a generation failure). End the round so it records and
+        // autoplay restarts instead of spinning. Don't flag a 0-tile board as a
+        // win — only a board with tiles still on it that we actually cleared.
+        state = remainingCount() === 0 && tiles.length > 0 ? 'won' : 'stuck'
+        if (state === 'won') {
+          endTime = performance.now()
+          const ms = Math.round(endTime - startTime)
+          if (best === 0 || ms < best) { best = ms; localStorage.setItem(HS_KEY, String(best)) }
+        }
+        scheduleBot(200)
+        return
+      }
       const [a, b] = pair
       selected = a.id
       // brief visual select, then remove

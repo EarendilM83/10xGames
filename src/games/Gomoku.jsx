@@ -201,12 +201,23 @@ export default function Gomoku() {
       if (aiOn && turn === A) scheduleAI()
     }
 
+    // First empty intersection on the board (random pick), or null if the board is full.
+    // Guaranteed safety net so we never hand undefined coordinates to place().
+    function anyEmptyCell() {
+      const empties = []
+      for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) if (!board[idx(r, c)]) empties.push([r, c])
+      if (!empties.length) return null
+      return empties[Math.floor(Math.random() * empties.length)]
+    }
+
     // Weakened CPU for autoplay WIN rounds: a near-random nearby move that only
     // blocks the opponent's immediate 5-threat. Never used in human play.
+    // Falls back to any empty cell if no in-range candidates exist (late game).
     function weakMove() {
       const cells = candidates(board)
       for (const [r, c] of cells) if (makesFive(board, r, c, P)) return [r, c] // block 5-threat only
-      return cells[Math.floor(Math.random() * cells.length)]
+      if (cells.length) return cells[Math.floor(Math.random() * cells.length)]
+      return anyEmptyCell()
     }
 
     function scheduleAI() {
@@ -216,6 +227,8 @@ export default function Gomoku() {
         if (state !== 'playing' || turn !== A) { lock = false; return }
         const mv = (auto && wantWin) ? weakMove() : bestMove(board, A, P)
         lock = false
+        // Self-heal: no legal move (board full) → settle the round so autoplay can restart.
+        if (!mv) { finish(); return }
         place(mv[0], mv[1], A)
       }, 350 + Math.random() * 200)
     }
@@ -368,8 +381,11 @@ export default function Gomoku() {
         // weak pink: only block an immediate cyan 5, else random → cyan (strong) wins
         mv = null
         for (const [r, c] of cells) if (makesFive(board, r, c, A)) { mv = [r, c]; break }
-        if (!mv) mv = cells[Math.floor(Math.random() * cells.length)]
+        if (!mv && cells.length) mv = cells[Math.floor(Math.random() * cells.length)]
+        if (!mv) mv = anyEmptyCell()
       }
+      // Self-heal: no legal move (board full) → settle the round so autoplay can restart.
+      if (!mv) { finish(); return }
       place(mv[0], mv[1], P)
     }
 

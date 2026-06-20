@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { solve } from './minesweeperSolver.js'
+import { solve, deduce } from './minesweeperSolver.js'
 import { isAutoplay, shouldAutoWin, recordAutoplayResult } from '../autoplay.js'
 
 // Classic Win95-style Minesweeper, rendered on canvas to match the Figma design.
@@ -79,10 +79,28 @@ export default function Minesweeper() {
           m[r][c] = true
           placed++
         }
-        chosen = m
-        if (solve(m, ROWS, COLS, MINES, safeR, safeC)) break // logically solvable → keep it
+        if (solve(m, ROWS, COLS, MINES, safeR, safeC)) { chosen = m; break } // only keep solvable layouts
       }
-      // commit (chosen is the last/solvable layout; fallback to last if cap hit)
+      // Never commit a board solve() rejected. If the cap was somehow hit (in practice it
+      // isn't — no-guess boards are dense), reduce the mine count step by step until a
+      // solvable layout is found, guaranteeing an acceptable, fully-clearable board.
+      let mineCount = MINES
+      while (!chosen) {
+        mineCount = Math.max(1, mineCount - 1)
+        for (let attempt = 0; attempt < CAP && !chosen; attempt++) {
+          const m = Array.from({ length: ROWS }, () => new Array(COLS).fill(false))
+          let placed = 0
+          while (placed < mineCount) {
+            const r = Math.floor(Math.random() * ROWS)
+            const c = Math.floor(Math.random() * COLS)
+            if (m[r][c]) continue
+            if (Math.abs(r - safeR) <= 1 && Math.abs(c - safeC) <= 1) continue
+            m[r][c] = true
+            placed++
+          }
+          if (solve(m, ROWS, COLS, mineCount, safeR, safeC)) chosen = m
+        }
+      }
       for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) grid[r][c].mine = chosen[r][c]
       for (let r = 0; r < ROWS; r++) {
         for (let c = 0; c < COLS; c++) {
@@ -315,34 +333,14 @@ export default function Minesweeper() {
     let safeSteps = 0 // safe deductions made this round (used to delay the deliberate loss)
     let recorded = false // ensures recordAutoplayResult fires exactly once per round
 
-    function hiddenNeighbors(r, c) {
-      const out = []
-      forNeighbors(r, c, (rr, cc) => { const cell = grid[rr][cc]; if (!cell.revealed && !cell.flagged) out.push([rr, cc]) })
-      return out
-    }
-    function flaggedCount(r, c) {
-      let n = 0
-      forNeighbors(r, c, (rr, cc) => { if (grid[rr][cc].flagged) n++ })
-      return n
-    }
-
-    // Returns one deduced move: { kind: 'reveal'|'flag', r, c }, or null if none found.
+    // Full-power deduction: ask the solver (single-point + CSP backbone + global count) for
+    // provably-safe / provably-mine cells given the CURRENT visible board — the SAME deduction
+    // power placeMines used to accept the board. Returns one move, or null if none provable.
+    // On an accepted (no-guess) board this always finds progress until the board is solved.
     function deduceMove() {
-      for (let r = 0; r < ROWS; r++) {
-        for (let c = 0; c < COLS; c++) {
-          const cell = grid[r][c]
-          if (!cell.revealed || cell.adj === 0) continue
-          const hidden = hiddenNeighbors(r, c)
-          if (hidden.length === 0) continue
-          const flagged = flaggedCount(r, c)
-          if (flagged === cell.adj) {
-            return { kind: 'reveal', r: hidden[0][0], c: hidden[0][1] }
-          }
-          if (cell.adj - flagged === hidden.length) {
-            return { kind: 'flag', r: hidden[0][0], c: hidden[0][1] }
-          }
-        }
-      }
+      const { safe, mines } = deduce(grid, ROWS, COLS, MINES)
+      if (safe.length) return { kind: 'reveal', r: safe[0][0], c: safe[0][1] }
+      if (mines.length) return { kind: 'flag', r: mines[0][0], c: mines[0][1] }
       return null
     }
 
@@ -376,17 +374,19 @@ export default function Minesweeper() {
         const pick = randomHidden()
         if (pick) reveal(pick[0], pick[1])
       } else {
-        // Win path: boards are no-guess solvable, so single-point logic deduces every move.
+        // Win path: boards are no-guess solvable using the SAME deduction the generator
+        // accepted them with (single-point + CSP + global count), so deduceMove() always
+        // makes progress until the board is solved.
         const mv = deduceMove()
         if (mv) {
           if (mv.kind === 'reveal') { reveal(mv.r, mv.c); safeSteps++ }
           else toggleFlag(mv.r, mv.c)
-        } else if (!wantWin) {
-          // Lose round before reaching the step threshold — keep things moving.
+        } else {
+          // No provable move. On an accepted board this can't happen, but never hang:
+          // poke a random hidden cell so the round resolves to won/lost and autoplay restarts.
           const pick = randomHidden()
           if (pick) reveal(pick[0], pick[1])
         }
-        // Win round with no deduction yet: wait a tick; logic will catch up as cells reveal.
       }
       const delay = 220 + Math.random() * 160 // 220-380ms per action, smooth/watchable
       botTimer = setTimeout(botStep, delay)

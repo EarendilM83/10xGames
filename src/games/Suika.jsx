@@ -108,6 +108,9 @@ export default function Suika() {
 
     // ---- physics sub-step ----
     function physicsStep() {
+      // fruit created by a merge in a previous step may now participate in
+      // merges; clear the one-step "fresh" guard before this step's passes
+      for (const b of balls) b.fresh = false
       // integrate
       for (const b of balls) {
         b.vy += GRAVITY
@@ -160,8 +163,10 @@ export default function Suika() {
             const ny = dy / dist
             const pen = minD - dist
 
-            // merge same tier on contact (skip already-merged this frame)
-            if (a.tier === c.tier && !a.merged && !c.merged && a.tier < MAX_TIER) {
+            // merge same tier on contact (skip already-merged this frame,
+            // and skip fruit freshly created this step so a merge can't
+            // cascade/tier-skip within a single physics step)
+            if (a.tier === c.tier && !a.merged && !c.merged && !a.fresh && !c.fresh && a.tier < MAX_TIER) {
               mergePair(a, c)
               // a and c flagged merged; break out of inner loop for a
               if (a.merged) break
@@ -209,6 +214,7 @@ export default function Suika() {
         tier: nt,
         r,
         merged: false,
+        fresh: true,
       })
       // bigger merges score more (tier+1 squared-ish growth)
       score += (nt + 1) * 2

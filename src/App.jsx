@@ -28,7 +28,10 @@ export default function App() {
   const [query, setQuery] = useState('')
   const [cat, setCat] = useState(() => LS('10xgames.ui.cat', 'All'))
   const [layout, setLayout] = useState(() => LS('10xgames.ui.layout', 'grid'))
-  const [pageSize, setPageSize] = useState(() => LS('10xgames.ui.pageSize', 12))
+  const [pageSize, setPageSize] = useState(() => {
+    const v = LS('10xgames.ui.pageSize', 12)
+    return PAGE_SIZES.includes(v) ? v : 12 // guard against a stale/invalid persisted value
+  })
   const [page, setPage] = useState(1)
 
   useEffect(() => { save('10xgames.ui.cat', cat) }, [cat])

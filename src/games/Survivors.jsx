@@ -403,7 +403,7 @@ export default function Survivors() {
         if (d < HERO_R + 6) {
           xp += g.amount
           gems.splice(i, 1)
-          if (xp >= xpNeed) { levelUp(); }
+          while (xpNeed > 0 && xp >= xpNeed) { levelUp(); }
         }
       }
 

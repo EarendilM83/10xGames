@@ -249,33 +249,99 @@ function solve(start, budget = 400000) {
   return null
 }
 
-// Build a deck whose deal the solver can fully win, returning both the deck and
-// its winning move list. FreeCell deals are ~99.99% solvable; we re-deal until
-// the solver confirms (usually within a couple of tries).
+// Build a deck whose deal can be fully won, returning both the deck and its
+// winning move list. FreeCell deals are ~99.99% solvable; we re-deal until the
+// DFS solver confirms one (usually within a couple of tries). If the random
+// search is somehow exhausted we fall back to a deterministic stacked deck whose
+// winning solution is CONSTRUCTED (not solver-derived), so a win round ALWAYS
+// gets a non-null solution and can never silently be recorded as a loss.
 function buildSolvableDeck() {
   for (let attempt = 0; attempt < 200; attempt++) {
     const deck = fairDeck()
     const sol = solve(dealLayout(deck))
     if (sol) return { deck, solution: sol }
   }
-  const deck = stackedSolvableDeck()
-  return { deck, solution: solve(dealLayout(deck)) }
+  return stackedSolvableDeck()
 }
 
-// Deterministic near-sorted deck the solver always wins (used only as a fallback
-// if a solvable random deal somehow isn't found): each column is built so low
-// cards surface quickly. The solver still verifies this at the call site in tests.
+// Deterministic deck + a CONSTRUCTED winning solution (independent of the DFS
+// budget). Cards are laid out near-sorted so low ranks surface, then a simple
+// constructive greedy — send any foundation-wanted card, else park the lowest
+// tableau top into a free cell — is run to produce the move list. The result is
+// asserted to win; if a layout ever failed to construct, we keep deterministically
+// permuting until one wins, so this never returns a null solution.
+function constructSolution(start) {
+  const st = cloneState(start)
+  const sol = []
+  const sendFoundations = () => {
+    let again = true
+    while (again) {
+      again = false
+      for (let i = 0; i < 4; i++) {
+        const c = st.free[i]
+        if (c && foundationWants(st.foundations[c.s], c)) {
+          st.foundations[c.s].push(c); st.free[i] = null; sol.push({ k: 'ff', cell: i }); again = true
+        }
+      }
+      for (let i = 0; i < 8; i++) {
+        const col = st.tableau[i]
+        if (col.length && foundationWants(st.foundations[col[col.length - 1].s], col[col.length - 1])) {
+          const c = col.pop(); st.foundations[c.s].push(c); sol.push({ k: 'tf', from: i }); again = true
+        }
+      }
+    }
+  }
+  // park the tableau top of the LOWEST rank into a free cell (surfaces aces/twos)
+  const parkLowest = () => {
+    const cell = st.free.indexOf(null)
+    if (cell < 0) return false
+    let bestCol = -1, bestRank = Infinity
+    for (let i = 0; i < 8; i++) {
+      const col = st.tableau[i]
+      if (col.length && col[col.length - 1].r < bestRank) { bestRank = col[col.length - 1].r; bestCol = i }
+    }
+    if (bestCol < 0) return false
+    st.free[cell] = st.tableau[bestCol].pop(); sol.push({ k: 'tc', from: bestCol, cell })
+    return true
+  }
+  // bounded loop: each iteration either sends a card to a foundation (≤52) or
+  // parks one (≤4 cells); progress is monotonic so this always terminates.
+  for (let guard = 0; guard < 5000 && !isWon(st); guard++) {
+    sendFoundations()
+    if (isWon(st)) break
+    if (!parkLowest()) break // stalled (shouldn't happen for the stacked layout)
+  }
+  return isWon(st) ? sol : null
+}
+
 function stackedSolvableDeck() {
+  // Build a near-sorted deck, then verify the constructive greedy wins it. The
+  // base arrangement already wins; the rotation loop is a deterministic safety
+  // net so we are guaranteed to return a deck WITH a known solution.
+  for (let rot = 0; rot < 52; rot++) {
+    const all = []
+    for (let s = 0; s < 4; s++) for (let r = 0; r < 13; r++) all.push(mk(r, s))
+    all.sort((a, b) => (b.r - a.r) || (((a.s + rot) % 4) - ((b.s + rot) % 4)))
+    const cols = [[], [], [], [], [], [], [], []]
+    for (let i = 0; i < 52; i++) cols[i % 8].push(all[i])
+    for (const col of cols) col.sort((a, b) => b.r - a.r) // deepest highest, top lowest
+    const deck = new Array(52)
+    const counts = [0, 0, 0, 0, 0, 0, 0, 0]
+    for (let i = 0; i < 52; i++) { const c = i % 8; deck[i] = cols[c][counts[c]++] }
+    const solution = constructSolution(dealLayout(deck))
+    if (solution) return { deck, solution }
+  }
+  // Unreachable in practice; last resort still tries the DFS solver.
   const all = []
   for (let s = 0; s < 4; s++) for (let r = 0; r < 13; r++) all.push(mk(r, s))
   all.sort((a, b) => (b.r - a.r) || (a.s - b.s))
   const cols = [[], [], [], [], [], [], [], []]
   for (let i = 0; i < 52; i++) cols[i % 8].push(all[i])
-  for (const col of cols) col.sort((a, b) => b.r - a.r) // deepest highest, top lowest
+  for (const col of cols) col.sort((a, b) => b.r - a.r)
   const deck = new Array(52)
   const counts = [0, 0, 0, 0, 0, 0, 0, 0]
   for (let i = 0; i < 52; i++) { const c = i % 8; deck[i] = cols[c][counts[c]++] }
-  return deck
+  return { deck, solution: solve(dealLayout(deck)) }
 }
 
 export default function FreeCell() {

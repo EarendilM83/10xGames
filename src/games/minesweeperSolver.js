@@ -87,6 +87,80 @@ export function solve(mine, ROWS, COLS, MINES, startR, startC) {
   }
 }
 
+// Deduce the next provably-safe / provably-mine cells from the CURRENT visible board,
+// using the same logic the generator accepts boards with (single-point + CSP backbone
+// + global mine count). Reused by the autoplay bot so it has the same deduction power.
+//
+// `visible[r][c]` = { revealed, flagged, adj } where `adj` is the displayed clue number
+// for revealed non-mine cells (only read when revealed). MINES is the total mine count.
+// Returns { safe: [[r,c]...], mines: [[r,c]...] } — cells the bot can reveal/flag with proof.
+export function deduce(visible, ROWS, COLS, MINES) {
+  // st: 0 hidden, 1 open, 2 known-mine (flagged by the player counts as known-mine)
+  const st = Array.from({ length: ROWS }, () => new Int8Array(COLS))
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+    if (visible[r][c].revealed) st[r][c] = 1
+    else if (visible[r][c].flagged) st[r][c] = 2
+  }
+  // clue value for an open cell comes from the visible adjacency number
+  const adj = (r, c) => visible[r][c].adj
+
+  const safe = []
+  const mines = []
+  const markSafe = (r, c) => { if (st[r][c] === 0) { st[r][c] = 1; safe.push([r, c]) } }
+  const markMine = (r, c) => { if (st[r][c] === 0) { st[r][c] = 2; mines.push([r, c]) } }
+  // `open` for cspStep: a forced-safe frontier cell becomes "open" in st AND is recorded.
+  // (We don't have its clue, so it can't yield further single-point this call — but on the
+  // next bot tick the cell is really revealed and its clue feeds the next deduce().)
+  const open = (r, c) => markSafe(r, c)
+
+  // Iterate single-point + global-count to a fixpoint, then CSP, then loop — mirroring solve()
+  // so the bot has the exact deduction power the generator accepted the board with. Each
+  // newly proven cell is accumulated; we return everything proven from this visible state.
+  for (;;) {
+    let progress = false
+
+    // global mine-count shortcuts
+    let hidden = 0, knownMines = 0
+    const hiddenCells = []
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+      if (st[r][c] === 0) { hidden++; hiddenCells.push([r, c]) }
+      else if (st[r][c] === 2) knownMines++
+    }
+    const remaining = MINES - knownMines
+    if (remaining === 0 && hidden > 0) { for (const [r, c] of hiddenCells) markSafe(r, c); break }
+    if (remaining === hidden && hidden > 0) { for (const [r, c] of hiddenCells) markMine(r, c); break }
+
+    // single-point
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+      if (st[r][c] !== 1) continue
+      const k = adj(r, c)
+      let m = 0
+      const hid = []
+      eachN(r, c, ROWS, COLS, (rr, cc) => {
+        if (st[rr][cc] === 2) m++
+        else if (st[rr][cc] === 0) hid.push([rr, cc])
+      })
+      if (hid.length === 0) continue
+      if (k - m === 0) for (const [rr, cc] of hid) { if (st[rr][cc] === 0) progress = true; markSafe(rr, cc) }
+      else if (k - m === hid.length) for (const [rr, cc] of hid) { if (st[rr][cc] === 0) progress = true; markMine(rr, cc) }
+    }
+    if (progress) continue
+
+    // CSP backbone — reuse the same routine the solver uses. It "opens" forced-safe cells via
+    // the `open` callback and marks forced-mine cells directly with st[r][c]=2. Snapshot st to
+    // capture the mines it newly proved.
+    const before = st.map((row) => Int8Array.from(row))
+    if (cspStep(st, ROWS, COLS, adj, open)) {
+      for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+        if (st[r][c] === 2 && before[r][c] !== 2) mines.push([r, c])
+      }
+      continue
+    }
+    break // no further deduction possible
+  }
+  return { safe, mines }
+}
+
 function eachN(r, c, ROWS, COLS, fn) {
   for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
     if (dr === 0 && dc === 0) continue
