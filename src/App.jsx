@@ -1,9 +1,10 @@
 import { useState, useEffect, useMemo } from 'react'
 import { games, getGame, categories } from './games/index.js'
-import { getAutoplay, setAutoplay, isAutoplay, getWinRate } from './autoplay.js'
+import { getAutoplay, setAutoplay, isAutoplay, getWinRate, setForceAutoplay } from './autoplay.js'
 import Starfield from './landing/Starfield.jsx'
 import HeroOrb from './landing/HeroOrb.jsx'
 import Sigil from './landing/Sigil.jsx'
+import Wall from './landing/Wall.jsx'
 
 // Hash-based routing so every game has its own URL (#/<id>) — shareable & open-in-new-tab.
 function useHashId() {
@@ -23,7 +24,10 @@ const PAGE_SIZES = [12, 24, 48, 'All']
 
 export default function App() {
   const routeId = useHashId()
-  const active = getGame(routeId)
+  const isWall = routeId === 'wall'
+  const active = isWall ? null : getGame(routeId)
+  // Deterministic from the route; runs before child game effects so wall tiles self-play.
+  setForceAutoplay(isWall)
   const [cfg, setCfg] = useState(getAutoplay)
   const [, tick] = useState(0)
 
@@ -70,6 +74,9 @@ export default function App() {
   const totalPages = Math.max(1, Math.ceil(filtered.length / size))
   const curPage = Math.min(page, totalPages)
   const pageItems = filtered.slice((curPage - 1) * size, curPage * size)
+
+  // ---------- demo wall ----------
+  if (isWall) return <Wall />
 
   // ---------- game view ----------
   if (active) {
@@ -132,6 +139,7 @@ export default function App() {
         <div className="demo-actions">
           <button onClick={armAll}>Arm all</button>
           <button onClick={clearArmed}>Clear</button>
+          <a className="wall-link" href="#/wall">Open demo wall ↗</a>
         </div>
       </div>
 

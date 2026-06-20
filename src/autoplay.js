@@ -24,7 +24,13 @@ function hashParam(name) {
   return new URLSearchParams(h.slice(qi + 1)).get(name)
 }
 
+// When the demo wall is active, every mounted game should self-play regardless of
+// the URL param or the armed config. Set deterministically from the route before render.
+let forceAll = false
+export function setForceAutoplay(v) { forceAll = !!v }
+
 export function isAutoplay(id) {
+  if (forceAll) return true
   const p = hashParam('auto')
   if (p === '1') return true
   if (p === '0') return false
